@@ -1,7 +1,8 @@
 import os
 import sys
 import getopt
-    
+
+# These files will be sorted into new directories. 
 filetypes = {
     'pat' : '9 - Cross Stitch Patterns',
     'torrent': 'Documents/Torrents', 
@@ -21,46 +22,67 @@ filetypes = {
 	'JPG' : '5 - Pictures/jpgs',
 	'PNG' : '5 - Pictures/pngs',
     'txt' : '2 - Documents/txt',
-    
 	}
 	
-
-usersjesslla = 'c:/Users/Jesslla'
+# This is the destination path
 destpathprefix = 'z:/'
 
-def main(argv):
-    try:
-        opts, args = getopt.getopt(argv,"hi:")
-    except getopt.GetoptError:
-        downloadsdir = 'c:/Users/Jesslla/Downloads'
-        print "Using default directory of", downloadsdir
-        
-        
-    for opt, arg in opts:
-        if opt == '-i':
-            print "Using", arg
-            downloadsdir = arg
-            print "Downloads dir is set to", downloadsdir
-            for i in os.listdir(downloadsdir):
-                z = i.split('.')
-                end = z[-1]
-                if end in filetypes:
-                    sourcepath = os.path.join(downloadsdir, i)
-                    destpath = os.path.join(destpathprefix, filetypes[end], i)
-                    destdir = os.path.join(destpathprefix, filetypes[end])
-                    print 'Destpath: ', destpath
-                    print 'Destdir: ', destdir
-                    if os.path.exists(destdir):
-                        print 'Moving ', i, 'to', destdir
-                        os.rename(sourcepath, destpath)
-                    else:
-                        print destdir, "does not exist. Creating."
-                        os.mkdir(destdir)
-        elif opt == '-h':
-            print "Usage: download-sorter.py -i input_directory ", 
-            sys.exit()
+# Colors for printing outputs
+red = '\033[91m'
+green = '\033[92m'
+yellow = '\033[93m'
+light_purple = '\033[94m'
+purple = '\033[95m'
+neutral = '\033[0m'
 
+def main():
+     
+    sourcedirs = []
+    
+    for arg in sys.argv[1:]:
+        if arg == '-h' or arg == '--help':
+            usage()
+            sys.exit(1)
+        else:
+            sourcedirs.append(arg)
+    if 1 > len( sourcedirs ):
+        sourcedirs = [ 'c:/Users/Jesslla/Downloads' ]
+    print "DEBUG: sourcedirs: %s" % ( repr( sourcedirs ))
+            
+    for sourcedir in sourcedirs:
+        process_dir(sourcedir)
+        
+def process_dir(input_dir):
+    downloadsdir = input_dir
+    print red, "Using", neutral, downloadsdir
+    for dir_item in os.listdir(downloadsdir):
+        filename_fields = dir_item.split('.')
+        dir_item_extension = filename_fields[-1]
+        if not dir_item_extension in filetypes:
+            continue
+        sourcepath = os.path.join(downloadsdir, dir_item)
+        destpath = os.path.join(destpathprefix, filetypes[dir_item_extension], dir_item)
+        destdir = os.path.join(destpathprefix, filetypes[dir_item_extension])
+        print purple, 'Destpath: ', neutral, destpath
+        print purple, 'Destdir: ', neutral, destdir
+        if not os.path.exists(destdir):
+            print destdir, "\033[92mdoes not exist. Creating.\033[0m"
+            os.mkdir(destdir)
+        target_attempt_number = 0
+        orig_destpath = destpath
+        while( os.path.isfile(destpath)):
+            target_attempt_number += 1
+            split_destpath = orig_destpath.split('.')
+            destpath = '.'.join(split_destpath[:-1])+'-%s' % (target_attempt_number)+'.%s' % (split_destpath[-1])
+            print 'DEBUG: ', filename_fields
+            print 'File', green, orig_destpath, neutral, 'exists. Renaming ', green, dir_item, neutral, 'to ', yellow, destpath, neutral
+        print 'Moving', yellow, destpath, neutral, 'to', yellow, destdir, neutral
+        os.rename(sourcepath, destpath)
+
+def usage():
+    print red, 'Usage:', yellow, "%s -i input_directory" % (sys.argv[0]), neutral
+            
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
 
             
