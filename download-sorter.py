@@ -52,9 +52,12 @@ def main():
     for sourcedir in sourcedirs:
         process_dir(sourcedir)
         
+def colorize_string(color, string_to_color):
+    return "%s%s%s" % (color, string_to_color, neutral)
+ 
 def process_dir(input_dir):
     downloadsdir = input_dir
-    print red, "Using", neutral, downloadsdir
+    print "%s %s" % (colorize_string(red, 'Using'), downloadsdir)
     for dir_item in os.listdir(downloadsdir):
         filename_fields = dir_item.split('.')
         dir_item_extension = filename_fields[-1]
@@ -63,10 +66,16 @@ def process_dir(input_dir):
         sourcepath = os.path.join(downloadsdir, dir_item)
         destpath = os.path.join(destpathprefix, filetypes[dir_item_extension], dir_item)
         destdir = os.path.join(destpathprefix, filetypes[dir_item_extension])
-        print purple, 'Destpath: ', neutral, destpath
-        print purple, 'Destdir: ', neutral, destdir
+        
+        
+        print  '%s %s' % (colorize_string(purple, 'Destpath'), destpath)
+        
+       
+        print  '%s %s' % (colorize_string(purple, destdir), destdir)
+        
         if not os.path.exists(destdir):
-            print destdir, "\033[92mdoes not exist. Creating.\033[0m"
+            
+            print "%s does not exist. Creating. %s" % (colorize_string(red, destdir), destdir)
             os.mkdir(destdir)
         target_attempt_number = 0
         orig_destpath = destpath
@@ -75,12 +84,13 @@ def process_dir(input_dir):
             split_destpath = orig_destpath.split('.')
             destpath = '.'.join(split_destpath[:-1])+'-%s' % (target_attempt_number)+'.%s' % (split_destpath[-1])
             print 'DEBUG: ', filename_fields
-            print 'File', green, orig_destpath, neutral, 'exists. Renaming ', green, dir_item, neutral, 'to ', yellow, destpath, neutral
-        print 'Moving', yellow, destpath, neutral, 'to', yellow, destdir, neutral
+           
+            print 'File %s exists. Renaming %s to %s' % (colorize_string(green, destpath), colorize_string(yellow, dir_item), colorize_string(yellow, destpath))
+        print 'Moving %s to %s' % (colorize_string(yellow, destpath), colorize_string(yellow, destdir))
         os.rename(sourcepath, destpath)
 
 def usage():
-    print red, 'Usage:', yellow, "%s -i input_directory" % (sys.argv[0]), neutral
+    print '%s %s -i input_directory' % (colorize_string(purple, 'Usage:'), sys.argv[0])
             
 if __name__ == "__main__":
     main()
