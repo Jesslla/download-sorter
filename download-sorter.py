@@ -1,11 +1,13 @@
 import os
 import sys
 import getopt
+import shutil
+import stat
 
 # These files will be sorted into new directories. 
 filetypes = {
     'pat' : '9 - Cross Stitch Patterns',
-    'torrent': 'Documents/Torrents', 
+    'torrent': '2 - Documents/Torrents', 
     'jpg': '5 - Pictures/jpgs',
 	'png': '5 - Pictures/pngs',
 	'gif': '5 - Pictures/gifs',
@@ -47,47 +49,69 @@ def main():
             sourcedirs.append(arg)
     if 1 > len( sourcedirs ):
         sourcedirs = [ 'c:/Users/Jesslla/Downloads' ]
-    print "DEBUG: sourcedirs: %s" % ( repr( sourcedirs ))
-            
+                
     for sourcedir in sourcedirs:
         process_dir(sourcedir)
         
 def colorize_string(color, string_to_color):
     return "%s%s%s" % (color, string_to_color, neutral)
- 
+
+    
+def process_subdir(subdir):
+    print "Subdir is: %s" % (subdir)
+    for subdir_item in os.listdir(subdir):
+        subdir_filename_fields = subdir_item.split('.')
+        subdir_filename_extension = subdir_filename_fields[-1]
+        print "subdir, subdir_item = %s" % (os.path.join(subdir, subdir_item))
+        if os.path.isdir(os.path.join(subdir, subdir_item)):
+            continue
+        if subdir_filename_extension not in filetypes:
+            print "Extension Unknown"
+            continue
+        destpath = os.path.join(destpathprefix, filetypes[subdir_filename_extension], os.path.basename(subdir))
+     
+        
+        print "Destpath = %s" % (destpath)
+        target_attempt_number = 0
+        orig_destpath = destpath
+        while( os.path.isdir(destpath)):
+            target_attempt_number += 1
+            destpath = orig_destpath+'-%s' % (target_attempt_number)
+            print 'File %s exists. Renaming %s to %s' % (colorize_string(green, destpath), colorize_string(yellow, subdir), colorize_string(yellow, destpath))
+        shutil.copytree(subdir, destpath)
+        break
+            
 def process_dir(input_dir):
     downloadsdir = input_dir
     print "%s %s" % (colorize_string(red, 'Using'), downloadsdir)
     for dir_item in os.listdir(downloadsdir):
-        filename_fields = dir_item.split('.')
-        dir_item_extension = filename_fields[-1]
-        if not dir_item_extension in filetypes:
-            continue
-        sourcepath = os.path.join(downloadsdir, dir_item)
-        destpath = os.path.join(destpathprefix, filetypes[dir_item_extension], dir_item)
-        destdir = os.path.join(destpathprefix, filetypes[dir_item_extension])
-        
-        
-        print  '%s %s' % (colorize_string(purple, 'Destpath'), destpath)
-        
-       
-        print  '%s %s' % (colorize_string(purple, destdir), destdir)
-        
-        if not os.path.exists(destdir):
+        if os.path.isdir(os.path.join(downloadsdir, dir_item)):
+            process_subdir(os.path.join(input_dir, dir_item))
+        else:
+            filename_fields = dir_item.split('.')
+            dir_item_extension = filename_fields[-1]
+            if not dir_item_extension in filetypes:
+                continue
+            sourcepath = os.path.join(downloadsdir, dir_item)
+            destpath = os.path.join(destpathprefix, filetypes[dir_item_extension], dir_item)
+            destdir = os.path.join(destpathprefix, filetypes[dir_item_extension])
             
-            print "%s does not exist. Creating. %s" % (colorize_string(red, destdir), destdir)
-            os.mkdir(destdir)
-        target_attempt_number = 0
-        orig_destpath = destpath
-        while( os.path.isfile(destpath)):
-            target_attempt_number += 1
-            split_destpath = orig_destpath.split('.')
-            destpath = '.'.join(split_destpath[:-1])+'-%s' % (target_attempt_number)+'.%s' % (split_destpath[-1])
-            print 'DEBUG: ', filename_fields
-           
-            print 'File %s exists. Renaming %s to %s' % (colorize_string(green, destpath), colorize_string(yellow, dir_item), colorize_string(yellow, destpath))
-        print 'Moving %s to %s' % (colorize_string(yellow, destpath), colorize_string(yellow, destdir))
-        os.rename(sourcepath, destpath)
+            print  '%s %s' % (colorize_string(purple, 'Destpath'), destpath)
+            print  '%s %s' % (colorize_string(purple, destdir), destdir)
+            
+            if not os.path.exists(destdir):
+                print "%s does not exist. Creating. %s" % (colorize_string(red, destdir), destdir)
+                os.mkdir(destdir)
+            target_attempt_number = 0
+            orig_destpath = destpath
+            while( os.path.isfile(destpath)):
+                target_attempt_number += 1
+                split_destpath = orig_destpath.split('.')
+                destpath = '.'.join(split_destpath[:-1])+'-%s' % (target_attempt_number)+'.%s' % (split_destpath[-1])
+                print 'DEBUG: ', filename_fields
+                print 'File %s exists. Renaming %s to %s' % (colorize_string(green, destpath), colorize_string(yellow, dir_item), colorize_string(yellow, destpath))
+            print 'Moving %s to %s' % (colorize_string(yellow, destpath), colorize_string(yellow, destdir))
+            os.rename(sourcepath, destpath)
 
 def usage():
     print '%s %s -i input_directory' % (colorize_string(purple, 'Usage:'), sys.argv[0])
